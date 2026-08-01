@@ -2,21 +2,29 @@ import json
 import aio_pika
 
 from app.core.config import settings
+from app.db.session import AsyncSessionLocal
+from app.services.inventory_service import process_order
 
 
-async def process_message(message: aio_pika.IncomingMessage):
+async def process_message(
+    message: aio_pika.IncomingMessage,
+):
 
     async with message.process():
 
-        body = json.loads(message.body.decode())
+        order = json.loads(
+            message.body.decode()
+        )
 
-        print()
+        print("\nOrder Received")
+        print(order)
 
-        print("=" * 50)
-        print("Order Received")
-        print(body)
-        print("=" * 50)
-        print()
+        async with AsyncSessionLocal() as db:
+
+            await process_order(
+                db,
+                order,
+            )
 
 
 async def start_consumer():
@@ -28,14 +36,12 @@ async def start_consumer():
     channel = await connection.channel()
 
     queue = await channel.declare_queue(
-
         "order.created",
-
         durable=True,
     )
 
     await queue.consume(process_message)
 
-    print("Inventory Consumer Started...")
+    print("Inventory Consumer Started")
 
     return connection
