@@ -18,13 +18,13 @@ async def process_order(
 
     if product is None:
 
-        print("❌ Product Not Found")
+        print("Product Not Found")
 
         return False
 
     if product.stock < order["quantity"]:
 
-        print("❌ Stock Not Available")
+        print("Stock Not Available")
 
         return False
 
@@ -35,7 +35,7 @@ async def process_order(
     )
 
     print(
-        f"✅ Stock Updated : {product.product_name} -> {product.stock}"
+        f"Stock Updated : {product.product_name} -> {product.stock}"
     )
 
     return True
