@@ -5,6 +5,8 @@ from app.repositories.inventory_repository import (
     update_stock,
 )
 
+from app.events.publisher import publish_event
+
 
 async def process_order(
     db: AsyncSession,
@@ -20,22 +22,53 @@ async def process_order(
 
         print("Product Not Found")
 
-        return False
+        await publish_event(
+
+            "order.rejected",
+
+            {
+                **order,
+                "reason": "Product Not Found",
+            },
+        )
+
+        return
 
     if product.stock < order["quantity"]:
 
-        print("Stock Not Available")
+        print("Insufficient Stock")
 
-        return False
+        await publish_event(
+
+            "order.rejected",
+
+            {
+                **order,
+                "reason": "Insufficient Stock",
+            },
+        )
+
+        return
 
     await update_stock(
+
         db,
+
         product,
+
         order["quantity"],
     )
 
     print(
-        f"Stock Updated : {product.product_name} -> {product.stock}"
+        f"Stock Updated -> {product.stock}"
     )
 
-    return True
+    await publish_event(
+
+        "order.confirmed",
+
+        {
+            **order,
+            "status": "CONFIRMED",
+        },
+    )
