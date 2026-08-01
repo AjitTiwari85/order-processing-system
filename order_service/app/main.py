@@ -1,10 +1,9 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from .database import engine
+from .models import Base
 
-from .database import engine, get_db
-from .models import Base, Order
-from .schemas import OrderCreate, OrderResponse
+from .api.orders import router as order_router
 
 app = FastAPI(
     title="Order Service",
@@ -32,25 +31,5 @@ async def health():
     }
 
 
-@app.post(
-    "/orders",
-    response_model=OrderResponse,
-    status_code=201
-)
-async def create_order(
-    order: OrderCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    new_order = Order(
-        customer_name=order.customer_name,
-        product_name=order.product_name,
-        quantity=order.quantity
-    )
-
-    db.add(new_order)
-
-    await db.commit()
-
-    await db.refresh(new_order)
-
-    return new_order
+# Register Orders Router
+app.include_router(order_router)
