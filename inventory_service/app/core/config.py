@@ -7,5 +7,9 @@ class Settings(BaseSettings):
         "postgresql+asyncpg://postgres:postgres@localhost:5434/inventorydb"
     )
 
+    RABBITMQ_URL: str = (
+        "amqp://guest:guest@localhost/"
+    )
 
-settings = Settings() 
+
+settings = Settings()
