@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Integer
+from sqlalchemy import Column, Integer
 from sqlalchemy import String
 
 from sqlalchemy.orm import Mapped
@@ -27,4 +27,20 @@ class Inventory(Base):
 
     stock: Mapped[int] = mapped_column(
         Integer
+    )
+
+class ProcessedEvent(Base):
+
+    __tablename__ = "processed_events"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    event_id = Column(
+        Integer,
+        unique=True,
+        nullable=False
     )
