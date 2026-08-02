@@ -1,5 +1,6 @@
 import json
 import aio_pika
+from app.core.logger import logger
 
 from app.core.config import settings
 
@@ -36,4 +37,4 @@ async def publish_event(
 
         )
 
-        print(f"Published -> {routing_key}")
+        logger.info(f"Published -> {routing_key}")

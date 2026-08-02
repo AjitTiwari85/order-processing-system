@@ -1,42 +1,48 @@
 import json
 import aio_pika
 
-RABBITMQ_URL = "amqp://guest:guest@localhost/"
+from app.config import settings
+from app.core.logger import logger
 
 
 async def publish_order_created(order):
 
-    connection = await aio_pika.connect_robust(RABBITMQ_URL)
-
-    async with connection:
-
-        channel = await connection.channel()
-
-        await channel.declare_queue(
-            "order.created",
-            durable=True
+    try:
+        connection = await aio_pika.connect_robust(
+            settings.RABBITMQ_URL
         )
 
-        message = {
-            "id": order.id,
-            "customer_name": order.customer_name,
-            "product_name": order.product_name,
-            "quantity": order.quantity,
-            "status": order.status,
-        }
+        async with connection:
 
-        await channel.default_exchange.publish(
+            channel = await connection.channel()
 
-            aio_pika.Message(
+            await channel.declare_queue(
+                "order.created",
+                durable=True,
+            )
 
-                body=json.dumps(message).encode(),
+            message = {
+                "id": order.id,
+                "customer_name": order.customer_name,
+                "product_name": order.product_name,
+                "quantity": order.quantity,
+                "status": order.status,
+            }
 
-                delivery_mode=aio_pika.DeliveryMode.PERSISTENT
+            await channel.default_exchange.publish(
+                aio_pika.Message(
+                    body=json.dumps(message).encode(),
+                    delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                ),
+                routing_key="order.created",
+            )
 
-            ),
+            logger.info(
+                f"Published order.created event | Order ID: {order.id}"
+            )
 
-            routing_key="order.created"
-
+    except Exception as e:
+        logger.error(
+            f"Failed to publish order.created event | Error: {e}"
         )
-
-        print("Event Published :", message) 
+        raise

@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.logger import logger
 
 from app.repositories.inventory_repository import (
     get_product,
@@ -23,7 +24,7 @@ async def process_order(
 
     # Idempotency Check
     if await is_processed(db, event_id):
-        print(f"Event {event_id} already processed. Skipping...")
+        logger.info(f"Event {event_id} already processed. Skipping...")
         return
 
     # Product Check
@@ -34,7 +35,7 @@ async def process_order(
 
     if product is None:
 
-        print("Product Not Found")
+        logger.warning("Product Not Found")
 
         await publish_event(
             "order.rejected",
@@ -54,7 +55,7 @@ async def process_order(
     # Stock Check
     if product.stock < order["quantity"]:
 
-        print("Insufficient Stock")
+        logger.warning("Insufficient Stock")
 
         await publish_event(
             "order.rejected",
@@ -78,7 +79,7 @@ async def process_order(
         order["quantity"],
     )
 
-    print(f"Stock Updated -> {product.stock}")
+    logger.info(f"Stock Updated -> {product.stock}")
 
     # Publish Confirmed Event
     await publish_event(
